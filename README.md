@@ -201,14 +201,22 @@ ambientales por nodo → 15' reflexión final (brecha digital, territorio y rol 
 
 ---
 
-## ☁️ Despliegue (Vercel + Postgres)
+## ☁️ Despliegue (Vercel + Neon Postgres)
 
-1. En `prisma/schema.prisma` cambia `provider = "sqlite"` por `provider = "postgresql"`.
-2. Crea una base Postgres (Vercel Postgres, Neon o Supabase) y copia su URL.
-3. En Vercel define las variables de entorno: `DATABASE_URL`, `DOCENTE_PASSWORD`,
-   `SESSION_SECRET`, `NEXT_PUBLIC_DURACION_PARTIDA_SEG`.
-4. Ejecuta migraciones: `npx prisma migrate deploy` (o `prisma db push`) contra la base de prod.
-5. Despliega. El `build` ya corre `prisma generate` automáticamente.
+El `datasource` ya es `postgresql` con `directUrl`.
+
+1. En **Neon** crea un proyecto y copia **dos** cadenas: la *pooled* (tiene `-pooler`) y la *directa*.
+2. En **Vercel** importa el repo (framework Next.js, se detecta solo) y define las variables:
+   - `DATABASE_URL` = cadena **pooled** de Neon (con `?sslmode=require`).
+   - `DIRECT_URL` = cadena **directa** de Neon.
+   - `AUTH_SECRET` = `openssl rand -base64 32`.
+   - `AUTH_URL` = la URL pública (ej. `https://tu-proyecto.vercel.app`) — opcional con `trustHost`.
+   - `CODIGO_INVITACION_DOCENTE` (opcional), `NEXT_PUBLIC_DURACION_PARTIDA_SEG` (opcional).
+3. Crea el esquema y siembra contra Neon (una sola vez):
+   `DATABASE_URL=<directa> DIRECT_URL=<directa> npx prisma db push && npx prisma db seed`.
+4. Despliega. El `build` corre `prisma generate` automáticamente.
+
+> El juego lee el contenido del catálogo en BD **siempre** (no hay bandera para activarlo/desactivarlo).
 
 ---
 

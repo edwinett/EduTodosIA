@@ -1,15 +1,18 @@
 // Esquema de datos de "SEÑAL PERDIDA".
-// Dev: SQLite. Prod: cambiar provider a "postgresql" y DATABASE_URL (ver README).
-// Portabilidad SQLite <-> Postgres: sin enums ni arrays nativos; roles/estados son String
-// validados por Zod y las listas se guardan como JSON en texto.
+// Postgres (Neon en producción; también sirve para desarrollo).
+// Sin enums ni arrays nativos: roles/estados son String validados por Zod y las listas
+// se guardan como JSON en texto (facilita portabilidad y migraciones).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Conexión agrupada (pooled) para el runtime serverless de Vercel.
+  url       = env("DATABASE_URL")
+  // Conexión directa para migraciones / db push (Neon la expone aparte).
+  directUrl = env("DIRECT_URL")
 }
 
 // ----------------------------------------------------------------- Auth.js
