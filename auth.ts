@@ -9,9 +9,8 @@ import { loginCredsSchema } from "@/lib/validacion/esquemas";
 
 // Configuración completa (Node runtime): adaptador Prisma + proveedores.
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  ...authConfig,
+  ...authConfig, // incluye trustHost
   adapter: PrismaAdapter(prisma),
-  trustHost: true,
   session: { strategy: "jwt" }, // JWT: requerido por el proveedor Credentials.
   providers: [
     Credentials({

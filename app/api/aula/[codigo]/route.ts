@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireDocente } from "@/lib/auth/guards";
-import { NODOS_JUGABLES } from "@/data/misiones";
+import { obtenerNodosPublicos } from "@/lib/contenido/servidor";
 
 export const runtime = "nodejs";
 
@@ -34,11 +34,14 @@ export async function GET(_req: Request, { params }: { params: { codigo: string 
     return NextResponse.json({ error: "Aula no encontrada" }, { status: 404 });
   }
 
-  // Retos por nodo (contenido público) para calcular nodos completados.
+  // Retos por nodo (contenido del catálogo) para calcular nodos completados.
+  const nodosPublicos = await obtenerNodosPublicos();
+  const jugables = nodosPublicos.filter((n) => n.id !== "final");
   const retosPorNodo: Record<string, string[]> = {};
-  for (const nodo of NODOS_JUGABLES) {
+  for (const nodo of jugables) {
     retosPorNodo[nodo.id] = nodo.retos.map((r) => r.id);
   }
+  const totalNodosJugables = jugables.length;
 
   const equipos = aula.equipos.map((e) => {
     const partida = e.partidas[0];
@@ -62,7 +65,7 @@ export async function GET(_req: Request, { params }: { params: { codigo: string 
       integrantes: e._count.integrantes,
       retosResueltos: correctos.size,
       nodosCompletados,
-      totalNodos: NODOS_JUGABLES.length,
+      totalNodos: totalNodosJugables,
       intentosTotales: intentos.length,
       pistasUsadas: intentos.reduce((s, i) => s + i.pistasUsadas, 0),
       puntaje: partida?.puntaje ?? 0,

@@ -97,11 +97,13 @@ tests/               unit/ (Vitest), e2e/ (Playwright)
 
 ## 🗃️ Modelo de datos (Prisma)
 
-`Usuario`, `Equipo`, `Partida`, `IntentoReto`, `Insignia`, `InsigniaObtenida`
+`User`/`Account`/`Session`/`VerificationToken` (Auth.js), `Equipo`, `SesionAula`, `Partida`,
+`IntentoReto`, `Insignia`, `InsigniaObtenida` y el catálogo editable `Nodo`/`Reto`/`Pista`
 (ver `prisma/schema.prisma`). Para mantener portabilidad **SQLite ⇄ Postgres** no se usan enums
 ni arreglos nativos: los roles/estados son `String` validados con Zod y las listas se guardan como
-JSON en texto. El catálogo de nodos/misiones/retos/pistas es contenido versionado en `data/`
-(no requiere tabla editable para jugar), y los intentos y resultados sí se persisten.
+JSON en texto. **El juego lee su contenido del catálogo en base de datos** (`Nodo`/`Reto`/`Pista`),
+expuesto sin soluciones por `/api/contenido`; `data/misiones.ts` es ahora solo la **fuente de
+siembra** (seed). Intentos y resultados se persisten.
 
 ---
 
@@ -187,11 +189,12 @@ El acceso usa **Auth.js (NextAuth v5)** con dos roles: **ESTUDIANTE** y **DOCENT
 5. **Edición de contenido** (`/docente/contenido`): **CRUD** de nodos, retos, pistas e insignias
    mediante **Server Actions** con validación **Zod**.
 
-> ℹ️ El CRUD de `/docente/contenido` edita un **catálogo de autoría** en base de datos (tablas
-> `Nodo`/`Reto`/`Pista`/`Insignia`), sembrado desde `data/`. El juego en vivo sigue usando
-> `data/misiones.ts` + los validadores de `lib/juego/soluciones.server.ts`. Conectar la partida
-> para que lea retos dinámicos del catálogo (con validadores por tipo) es el siguiente paso de
-> integración documentado abajo.
+> ✅ El CRUD de `/docente/contenido` edita el **catálogo en base de datos** (`Nodo`/`Reto`/`Pista`/
+> `Insignia`) y **el juego lo lee en vivo**: editar un enunciado, una pista, los puntos, la clave de
+> un candado o la solución se refleja en la siguiente partida. La validación sigue ocurriendo solo
+> en el servidor, ahora con **validadores dinámicos por tipo** (`lib/juego/validadores.ts`) que leen
+> la solución del catálogo. Añadir un reto de un **tipo ya soportado** a un nodo núcleo aparece y se
+> valida; tipos de reto completamente nuevos requieren además su widget de interfaz (ver más abajo).
 
 Sugerencia de sesión (90 min): 10' encuadre → 45' partida → 20' socialización de datos
 ambientales por nodo → 15' reflexión final (brecha digital, territorio y rol como licenciados).
@@ -211,15 +214,19 @@ ambientales por nodo → 15' reflexión final (brecha digital, territorio y rol 
 
 ## 🔭 Siguientes pasos (alcance futuro)
 
-Ya implementado y verificado (`build`, `test` y `lint` en verde): motor de juego + 4 nodos +
+Ya implementado y verificado (`build`, `test`, `lint` y **E2E** en verde): motor de juego + 4 nodos +
 ranking + insignias + **Auth.js (credenciales + enlace mágico, 2 roles, middleware)** +
-**panel docente con CRUD (Server Actions + Zod)** + **modo aula con dashboard en vivo (polling 5 s)**.
+**panel docente con CRUD (Server Actions + Zod)** + **modo aula con dashboard en vivo (polling 5 s)** +
+**juego conectado al catálogo editable** (lee `Nodo`/`Reto`/`Pista` de la BD vía `/api/contenido`,
+validadores dinámicos por tipo en el servidor).
 
 Quedan como mejoras:
 
-- **Wiring del juego al catálogo editable:** que la partida lea `Nodo`/`Reto`/`Pista` desde la BD
-  (hoy el catálogo CRUD y el contenido jugable conviven; ver nota en la guía docente), con
-  validadores dinámicos por tipo de reto en el servidor.
+- **Widgets para tipos de reto nuevos:** cada `tipo` de reto tiene un componente de interfaz; crear
+  un tipo inédito desde el panel requiere añadir su widget en `components/retos/`. Los tipos actuales
+  (dial, morse, binario-ascii, cronológico, numérico y opciones) ya se renderizan y validan dinámicamente.
+- **Nodos extra:** los 4 nodos núcleo (radio/tv/telefono/internet) siguen siendo el eje que habilita
+  la caja fuerte final; nodos adicionales del catálogo se muestran pero no modifican ese requisito.
 - **Enlace mágico con SMTP real** en producción (hoy el enlace se imprime en consola en desarrollo).
 - Exportación a **PDF** (hoy CSV) y progreso por **WebSocket** (hoy *polling*).
 - Muestras de audio reales con **Howler.js** en `/public/audio` (hoy efectos sintetizados).

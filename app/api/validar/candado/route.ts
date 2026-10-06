@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { validarCandadoSchema } from "@/lib/validacion/esquemas";
-import { validarCandado, claveParcial } from "@/lib/juego/soluciones.server";
+import { validarClaveCandado } from "@/lib/juego/validadores";
+import { obtenerNodoServidor, obtenerClavesFinal } from "@/lib/contenido/servidor";
 
 export const runtime = "nodejs";
 
-// POST /api/validar/candado — valida la apertura de un candado EN EL SERVIDOR.
+// POST /api/validar/candado — valida la apertura de un candado EN EL SERVIDOR,
+// leyendo la clave esperada desde el catálogo (base de datos).
 export async function POST(req: Request) {
   let body: unknown;
   try {
@@ -22,11 +24,22 @@ export async function POST(req: Request) {
   }
 
   const { nodo, valor } = parsed.data;
-  const { correcto } = validarCandado(nodo, valor);
 
+  // Caja fuerte final: combinación de las 4 claves parciales en orden.
+  if (nodo === "final") {
+    const claves = await obtenerClavesFinal();
+    const correcto = validarClaveCandado("combinacion", claves, valor);
+    return NextResponse.json({ correcto, claveParcial: correcto ? claves.join("-") : null });
+  }
+
+  const nodoDb = await obtenerNodoServidor(nodo);
+  if (!nodoDb) {
+    return NextResponse.json({ error: "Nodo no encontrado" }, { status: 404 });
+  }
+
+  const correcto = validarClaveCandado(nodoDb.tipoCandado, nodoDb.claveParcial, valor);
   return NextResponse.json({
     correcto,
-    // La clave parcial se entrega solo si el candado abrió.
-    claveParcial: correcto ? claveParcial(nodo) : null,
+    claveParcial: correcto ? nodoDb.claveParcial : null,
   });
 }

@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useJuego } from "@/lib/juego/store";
-import { NODOS } from "@/data/misiones";
+import { useContenido } from "@/lib/contenido/cliente";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function DerrotaPage() {
   const router = useRouter();
   const estado = useJuego();
+  const { nodos } = useContenido();
 
   // Nodo activo = primero sin completar.
-  const nodoActivo = NODOS.find((n) => n.id !== "final" && !estado.nodos[n.id]?.candadoAbierto);
+  const nodoActivo = nodos.find((n) => n.id !== "final" && !estado.nodos[n.id]?.candadoAbierto);
 
   function reintentarNodo() {
     if (nodoActivo) {
@@ -46,7 +47,7 @@ export default function DerrotaPage() {
             <p>
               Nodos reconectados:{" "}
               <strong>
-                {NODOS.filter((n) => n.id !== "final" && estado.nodos[n.id]?.candadoAbierto).length}/4
+                {nodos.filter((n) => n.id !== "final" && estado.nodos[n.id]?.candadoAbierto).length}/4
               </strong>
             </p>
             <p>Insignias: <strong>{estado.insignias.length}</strong></p>

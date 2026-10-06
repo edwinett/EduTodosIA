@@ -12,7 +12,7 @@ const ETIQUETAS: Record<Exclude<NodoId, "final">, string> = {
   internet: "Internet",
 };
 
-export function InventarioClaves({ claves }: { claves: Record<NodoId, string | null> }) {
+export function InventarioClaves({ claves }: { claves: Record<string, string | null> }) {
   return (
     <div className="flex flex-wrap items-center gap-2" aria-label="Claves obtenidas">
       {NODOS_ORDEN.map((nodo) => {

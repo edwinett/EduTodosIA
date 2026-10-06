@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") ?? "/mapa";
+  const callbackUrl = params.get("callbackUrl") ?? "/lobby";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

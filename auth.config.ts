@@ -9,6 +9,10 @@ export const RUTAS_DOCENTE = ["/docente"];
 export const RUTAS_JUEGO = ["/mapa", "/sala", "/final", "/juego"];
 
 export const authConfig = {
+  // trustHost debe estar también aquí (no solo en auth.ts): el middleware usa SOLO
+  // authConfig y, sin esto, difiere la decisión de "cookie segura" entre edge y node
+  // (en http el edge buscaría una cookie __Secure-… inexistente y no vería la sesión).
+  trustHost: true,
   pages: {
     signIn: "/login",
   },

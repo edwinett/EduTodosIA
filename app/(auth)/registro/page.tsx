@@ -60,7 +60,7 @@ export default function RegistroPage() {
       if (login?.error) {
         router.push("/login");
       } else {
-        router.push(form.rol === "DOCENTE" ? "/docente" : "/mapa");
+        router.push(form.rol === "DOCENTE" ? "/docente" : "/lobby");
       }
     } catch {
       setError("Error de red. Intenta de nuevo.");
