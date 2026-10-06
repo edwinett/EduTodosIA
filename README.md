@@ -212,9 +212,10 @@ El `datasource` ya es `postgresql` con `directUrl`.
    - `AUTH_SECRET` = `openssl rand -base64 32`.
    - `AUTH_URL` = la URL pública (ej. `https://tu-proyecto.vercel.app`) — opcional con `trustHost`.
    - `CODIGO_INVITACION_DOCENTE` (opcional), `NEXT_PUBLIC_DURACION_PARTIDA_SEG` (opcional).
-3. Crea el esquema y siembra contra Neon (una sola vez):
-   `DATABASE_URL=<directa> DIRECT_URL=<directa> npx prisma db push && npx prisma db seed`.
-4. Despliega. El `build` corre `prisma generate` automáticamente.
+3. Despliega. En Vercel se usa el script **`vercel-build`**, que antes de compilar ejecuta
+   `prisma db push` (crea el esquema) y el seed (idempotente: nodos/retos/insignias + usuarios demo).
+   No necesitas correr nada a mano. (Para crear el esquema desde tu máquina en cambio:
+   `DATABASE_URL=<directa> DIRECT_URL=<directa> npx prisma db push && npx prisma db seed`.)
 
 > El juego lee el contenido del catálogo en BD **siempre** (no hay bandera para activarlo/desactivarlo).
 
