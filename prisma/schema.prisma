@@ -1,0 +1,97 @@
+// Esquema de datos de "SEÑAL PERDIDA".
+// Dev: SQLite. Prod: cambiar provider a "postgresql" y DATABASE_URL (ver README).
+// Nota: no usamos enums ni arrays nativos para mantener portabilidad SQLite <-> Postgres;
+// los roles son String validados por Zod y las listas se guardan como JSON en texto.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id          String   @id @default(cuid())
+  nombre      String
+  email       String   @unique
+  rol         String   @default("ESTUDIANTE") // ESTUDIANTE | DOCENTE
+  universidad String?
+  programa    String?
+  semestre    Int?
+  creadoEn    DateTime @default(now())
+
+  equipoId String?
+  equipo   Equipo? @relation(fields: [equipoId], references: [id])
+
+  insignias InsigniaObtenida[]
+}
+
+model Equipo {
+  id           String    @id @default(cuid())
+  nombre       String
+  codigo       String    @unique // 6 caracteres
+  avatar       String    @default("satelite")
+  puntajeTotal Int       @default(0)
+  tiempoTotal  Int       @default(0) // ms
+  programa     String?
+  semestre     Int?
+  creadoEn     DateTime  @default(now())
+
+  integrantes Usuario[]
+  partidas    Partida[]
+  insignias   InsigniaObtenida[]
+}
+
+model Partida {
+  id              String    @id @default(cuid())
+  equipoId        String
+  equipo          Equipo    @relation(fields: [equipoId], references: [id])
+  inicio          DateTime  @default(now())
+  fin             DateTime?
+  estado          String    @default("EN_CURSO") // EN_CURSO | GANADA | PERDIDA
+  nodoActual      String?   // radio | tv | telefono | internet | final
+  clavesObtenidas String    @default("[]") // JSON string[]
+  puntaje         Int       @default(0)
+  precision       Float     @default(0)
+
+  intentos IntentoReto[]
+}
+
+model IntentoReto {
+  id          String   @id @default(cuid())
+  partidaId   String
+  partida     Partida  @relation(fields: [partidaId], references: [id])
+  retoId      String
+  nodo        String
+  respuesta   String
+  correcto    Boolean
+  tiempoMs    Int
+  pistasUsadas Int     @default(0)
+  creadoEn    DateTime @default(now())
+}
+
+model Insignia {
+  id          String  @id @default(cuid())
+  codigo      String  @unique
+  nombre      String
+  descripcion String
+  icono       String
+  criterio    String
+
+  obtenidas InsigniaObtenida[]
+}
+
+model InsigniaObtenida {
+  id         String   @id @default(cuid())
+  insigniaId String
+  insignia   Insignia @relation(fields: [insigniaId], references: [id])
+  usuarioId  String?
+  usuario    Usuario? @relation(fields: [usuarioId], references: [id])
+  equipoId   String?
+  equipo     Equipo?  @relation(fields: [equipoId], references: [id])
+  fecha      DateTime @default(now())
+
+  @@unique([insigniaId, equipoId])
+}
