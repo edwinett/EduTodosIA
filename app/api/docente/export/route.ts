@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/db/prisma";
+import { requireDocente } from "@/lib/auth/guards";
 
 export const runtime = "nodejs";
 
@@ -12,8 +12,9 @@ function csvEscape(valor: unknown): string {
 
 // GET /api/docente/export — exporta el ranking a CSV (solo docente autenticado).
 export async function GET() {
-  const esDocente = cookies().get("docente")?.value === "1";
-  if (!esDocente) {
+  try {
+    await requireDocente();
+  } catch {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
