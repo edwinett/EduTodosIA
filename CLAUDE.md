@@ -19,6 +19,21 @@ Guía para cualquier agente o persona que modifique este proyecto.
 - ⏱️ **El timer es autoritativo en el backend** (`/api/timer`). El cliente solo refleja el valor.
 - `data/misiones.ts` es contenido **público**: no agregar ahí soluciones, claves ni respuestas.
 
+## Autenticación (Auth.js v5)
+
+- Dos roles: `ESTUDIANTE` y `DOCENTE`. Sesión **JWT** (requerida por el proveedor Credentials).
+- `auth.config.ts` es **edge-safe** (sin Prisma ni bcrypt) y lo usa `middleware.ts`.
+  `auth.ts` tiene el adaptador Prisma, Credentials (bcrypt) y el enlace mágico (Nodemailer).
+- El rol se propaga en los callbacks `jwt`/`session`. No hacer consultas a BD en el runtime edge.
+- Proteger rutas nuevas añadiéndolas a `RUTAS_DOCENTE`/`RUTAS_JUEGO` en `auth.config.ts` y al
+  `matcher` de `middleware.ts`.
+- En Server Actions / route handlers usar `requireUsuario()` / `requireDocente()` (`lib/auth/guards.ts`).
+
+## CRUD de contenido
+
+- Mutaciones vía **Server Actions** (`app/(docente)/docente/contenido/actions.ts`) con validación
+  **Zod** y `requireDocente()`. Nunca exponer `claveParcial`/`solucionJson` al cliente.
+
 ## Estado
 
 - Estado de juego del cliente: **Zustand** con persistencia (`lib/juego/store.ts`).
