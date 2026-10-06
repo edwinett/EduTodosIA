@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "SEÑAL PERDIDA · Escape Room Educativo",
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Saltar al contenido
         </a>
-        <main id="contenido">{children}</main>
+        <Providers>
+          <main id="contenido">{children}</main>
+        </Providers>
       </body>
     </html>
   );

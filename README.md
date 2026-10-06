@@ -159,13 +159,39 @@ El contenido de los nodos se basa en fuentes públicas que conviene citar en el 
 
 ---
 
+## 🔐 Autenticación y roles (Auth.js)
+
+El acceso usa **Auth.js (NextAuth v5)** con dos roles: **ESTUDIANTE** y **DOCENTE**.
+
+- **Dos formas de ingresar:** credenciales (correo + contraseña) o **enlace mágico**
+  (en desarrollo el enlace se imprime en la consola del servidor; en producción se configura SMTP
+  con `EMAIL_SERVER`/`EMAIL_FROM`).
+- **Registro:** `/registro`. Para crear una cuenta DOCENTE se exige el código de invitación
+  `CODIGO_INVITACION_DOCENTE` (por defecto `UT-DOCENTE`), así los estudiantes no se auto-asignan docentes.
+- **Middleware** (`middleware.ts`) protege las rutas: `/docente/*` requiere rol DOCENTE;
+  `/mapa`, `/sala/*`, `/final` y `/juego/*` requieren sesión. La lógica vive en `auth.config.ts`
+  (edge-safe) y la configuración completa con adaptador Prisma + bcrypt en `auth.ts` (Node).
+- **Cuentas de prueba** (creadas por el seed):
+  - Docente: `docente@ut.edu.co` / `docente123`
+  - Estudiante: `estudiante@ut.edu.co` / `estudiante123`
+
 ## 👩‍🏫 Guía docente
 
-1. Entra a `/docente` con la clave de `DOCENTE_PASSWORD` (por defecto `tolima2024` en desarrollo).
-2. **Ranking:** seguimiento en vivo por equipo, con filtros y **exportación a CSV**.
-3. **Diagnóstico:** pega el `ID de partida` para ver intentos, aciertos y pistas por reto.
-4. **Insignias:** catálogo y criterios.
-5. Comparte el **código de equipo** de 6 caracteres con cada grupo para que se unan.
+1. Ingresa a `/docente` (requiere rol DOCENTE).
+2. **Modo aula:** crea una sesión de aula; obtendrás un **código de 6 caracteres**. Compártelo con
+   los estudiantes para que, al crear su equipo, lo peguen en "Código de aula". El dashboard
+   `/docente/aula/[codigo]` muestra el **progreso en vivo** de cada equipo (polling cada 5 s):
+   nodos completados, retos resueltos, intentos y pistas.
+3. **Ranking:** seguimiento por equipo con filtros y **exportación a CSV**.
+4. **Diagnóstico:** pega el `ID de partida` para ver intentos, aciertos y pistas por reto.
+5. **Edición de contenido** (`/docente/contenido`): **CRUD** de nodos, retos, pistas e insignias
+   mediante **Server Actions** con validación **Zod**.
+
+> ℹ️ El CRUD de `/docente/contenido` edita un **catálogo de autoría** en base de datos (tablas
+> `Nodo`/`Reto`/`Pista`/`Insignia`), sembrado desde `data/`. El juego en vivo sigue usando
+> `data/misiones.ts` + los validadores de `lib/juego/soluciones.server.ts`. Conectar la partida
+> para que lea retos dinámicos del catálogo (con validadores por tipo) es el siguiente paso de
+> integración documentado abajo.
 
 Sugerencia de sesión (90 min): 10' encuadre → 45' partida → 20' socialización de datos
 ambientales por nodo → 15' reflexión final (brecha digital, territorio y rol como licenciados).
@@ -185,13 +211,17 @@ ambientales por nodo → 15' reflexión final (brecha digital, territorio y rol 
 
 ## 🔭 Siguientes pasos (alcance futuro)
 
-Esta entrega prioriza, como se pidió, **motor de juego + 4 nodos jugables + ranking + insignias +
-panel docente mínimo**, todo verificado (`build`, `test` y `lint` en verde). Quedan como mejoras:
+Ya implementado y verificado (`build`, `test` y `lint` en verde): motor de juego + 4 nodos +
+ranking + insignias + **Auth.js (credenciales + enlace mágico, 2 roles, middleware)** +
+**panel docente con CRUD (Server Actions + Zod)** + **modo aula con dashboard en vivo (polling 5 s)**.
 
-- **Auth.js** (credenciales + *magic link*) para login persistente de estudiantes y docentes;
-  hoy el acceso docente usa una clave simple por cookie y el equipo se identifica por código.
-- Edición de salas/retos/pistas desde la UI docente (hoy el contenido es versionado en `data/`).
-- Exportación a **PDF** (hoy CSV) y ranking por **WebSocket** (hoy *polling*).
+Quedan como mejoras:
+
+- **Wiring del juego al catálogo editable:** que la partida lea `Nodo`/`Reto`/`Pista` desde la BD
+  (hoy el catálogo CRUD y el contenido jugable conviven; ver nota en la guía docente), con
+  validadores dinámicos por tipo de reto en el servidor.
+- **Enlace mágico con SMTP real** en producción (hoy el enlace se imprime en consola en desarrollo).
+- Exportación a **PDF** (hoy CSV) y progreso por **WebSocket** (hoy *polling*).
 - Muestras de audio reales con **Howler.js** en `/public/audio` (hoy efectos sintetizados).
 
 ---

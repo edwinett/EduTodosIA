@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useJuego } from "@/lib/juego/store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,15 +23,45 @@ const AVATARES = [
 export default function LobbyPage() {
   const router = useRouter();
   const juego = useJuego();
+  const { data: session, status } = useSession();
 
   const [nombre, setNombre] = useState("");
-  const [integrante, setIntegrante] = useState("");
   const [programa, setPrograma] = useState("Ciencias Naturales y Educación Ambiental");
   const [semestre, setSemestre] = useState("3");
   const [avatar, setAvatar] = useState("satelite");
+  const [codigoAula, setCodigoAula] = useState("");
   const [codigo, setCodigo] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+
+  if (status === "loading") {
+    return (
+      <div className="container flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Cargando…</p>
+      </div>
+    );
+  }
+
+  if (!session?.user) {
+    return (
+      <div className="container flex min-h-screen items-center justify-center">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader>
+            <CardTitle>Inicia sesión para jugar</CardTitle>
+            <CardDescription>Necesitas una cuenta para crear o unirte a un equipo.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Button asChild>
+              <Link href="/login?callbackUrl=/lobby">Ingresar</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/registro">Crear cuenta</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   async function crear() {
     setError(null);
@@ -43,7 +75,7 @@ export default function LobbyPage() {
           avatar,
           programa,
           semestre: Number(semestre),
-          integrante: integrante || undefined,
+          codigoAula: codigoAula || undefined,
         }),
       });
       if (!res.ok) {
@@ -75,10 +107,10 @@ export default function LobbyPage() {
       const res = await fetch("/api/equipo", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigo, integrante }),
+        body: JSON.stringify({ codigo }),
       });
       if (!res.ok) {
-        setError("Código no encontrado o datos inválidos.");
+        setError("Código no encontrado.");
         return;
       }
       const data = await res.json();
@@ -122,21 +154,7 @@ export default function LobbyPage() {
             <TabsContent value="crear" className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="nombre">Nombre del equipo</Label>
-                <Input
-                  id="nombre"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Los Reconectores"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="integrante">Tu nombre (opcional)</Label>
-                <Input
-                  id="integrante"
-                  value={integrante}
-                  onChange={(e) => setIntegrante(e.target.value)}
-                  placeholder="Ej: Ana Pérez"
-                />
+                <Input id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Los Reconectores" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -152,6 +170,17 @@ export default function LobbyPage() {
                     onChange={(e) => setSemestre(e.target.value.replace(/\D/g, ""))}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="codigoAula">Código de aula (opcional)</Label>
+                <Input
+                  id="codigoAula"
+                  value={codigoAula}
+                  onChange={(e) => setCodigoAula(e.target.value.toUpperCase().slice(0, 6))}
+                  placeholder="Lo entrega tu docente"
+                  className="font-mono uppercase tracking-[0.3em]"
+                  maxLength={6}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Avatar del equipo</Label>
@@ -190,20 +219,7 @@ export default function LobbyPage() {
                   maxLength={6}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="integrante2">Tu nombre</Label>
-                <Input
-                  id="integrante2"
-                  value={integrante}
-                  onChange={(e) => setIntegrante(e.target.value)}
-                  placeholder="Ej: Ana Pérez"
-                />
-              </div>
-              <Button
-                className="w-full"
-                onClick={unirse}
-                disabled={codigo.length !== 6 || integrante.trim().length < 2 || cargando}
-              >
+              <Button className="w-full" onClick={unirse} disabled={codigo.length !== 6 || cargando}>
                 {cargando ? "Uniéndote…" : "Unirse al equipo"}
               </Button>
             </TabsContent>

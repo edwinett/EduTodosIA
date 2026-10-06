@@ -7,6 +7,14 @@ import {
   rankingQuerySchema,
   registrarResultadoSchema,
   docenteLoginSchema,
+  loginCredsSchema,
+  registroSchema,
+  crearSesionAulaSchema,
+  unirseAulaSchema,
+  nodoCrudSchema,
+  retoCrudSchema,
+  pistaCrudSchema,
+  insigniaCrudSchema,
 } from "@/lib/validacion/esquemas";
 
 describe("validarRetoSchema", () => {
@@ -115,5 +123,89 @@ describe("registrarResultadoSchema y docenteLoginSchema", () => {
   it("exige clave en docenteLoginSchema", () => {
     expect(docenteLoginSchema.safeParse({ password: "x" }).success).toBe(true);
     expect(docenteLoginSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("autenticación", () => {
+  it("loginCredsSchema valida correo y contraseña mínima", () => {
+    expect(loginCredsSchema.safeParse({ email: "a@b.co", password: "123456" }).success).toBe(true);
+    expect(loginCredsSchema.safeParse({ email: "a@b.co", password: "123" }).success).toBe(false);
+    expect(loginCredsSchema.safeParse({ email: "noesmail", password: "123456" }).success).toBe(false);
+  });
+
+  it("registroSchema aplica rol por defecto ESTUDIANTE y coacciona semestre", () => {
+    const r = registroSchema.safeParse({ nombre: "Ana", email: "a@b.co", password: "123456", semestre: "3" });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.rol).toBe("ESTUDIANTE");
+      expect(r.data.semestre).toBe(3);
+    }
+    expect(
+      registroSchema.safeParse({ nombre: "Docente", email: "d@b.co", password: "123456", rol: "DOCENTE" }).success,
+    ).toBe(true);
+  });
+});
+
+describe("modo aula", () => {
+  it("crearSesionAulaSchema exige nombre", () => {
+    expect(crearSesionAulaSchema.safeParse({ nombre: "Grupo A" }).success).toBe(true);
+    expect(crearSesionAulaSchema.safeParse({ nombre: "" }).success).toBe(false);
+  });
+  it("unirseAulaSchema normaliza y valida el código", () => {
+    const r = unirseAulaSchema.safeParse({ codigoAula: "abc123" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.codigoAula).toBe("ABC123");
+    expect(unirseAulaSchema.safeParse({ codigoAula: "x" }).success).toBe(false);
+  });
+});
+
+describe("CRUD de contenido", () => {
+  it("nodoCrudSchema valida slug y enums", () => {
+    const base = {
+      slug: "radio",
+      nombre: "Radio",
+      descripcion: "desc",
+      narrativa: "nar",
+      hitoHistorico: "hito",
+      datoAmbiental: "dato",
+      dificultad: "facil",
+      tiempoSugeridoMin: "10",
+      tipoCandado: "numerico",
+      pistaCandado: "pista",
+    };
+    expect(nodoCrudSchema.safeParse(base).success).toBe(true);
+    expect(nodoCrudSchema.safeParse({ ...base, slug: "Radio Mal" }).success).toBe(false);
+    expect(nodoCrudSchema.safeParse({ ...base, dificultad: "imposible" }).success).toBe(false);
+  });
+
+  it("retoCrudSchema rechaza JSON inválido en datosJson", () => {
+    const base = {
+      nodoId: "n1",
+      slug: "reto-1",
+      tipo: "quiz",
+      titulo: "Titulo",
+      enunciado: "Enunciado del reto",
+      dificultad: "media",
+      puntos: "100",
+      datosJson: "{ no es json",
+      solucionJson: "null",
+      feedbackEducativo: "fb",
+    };
+    expect(retoCrudSchema.safeParse(base).success).toBe(false);
+    expect(retoCrudSchema.safeParse({ ...base, datosJson: '{"a":1}' }).success).toBe(true);
+  });
+
+  it("pistaCrudSchema valida el nivel 1..3", () => {
+    expect(pistaCrudSchema.safeParse({ retoId: "r1", nivel: "2", texto: "ok", costoPuntos: "100" }).success).toBe(true);
+    expect(pistaCrudSchema.safeParse({ retoId: "r1", nivel: "4", texto: "ok", costoPuntos: "100" }).success).toBe(false);
+  });
+
+  it("insigniaCrudSchema valida el código", () => {
+    expect(
+      insigniaCrudSchema.safeParse({ codigo: "mi-insignia", nombre: "Insignia", descripcion: "descripcion", icono: "estrella", criterio: "criterio" }).success,
+    ).toBe(true);
+    expect(
+      insigniaCrudSchema.safeParse({ codigo: "MAL CODIGO", nombre: "Insignia", descripcion: "descripcion", icono: "estrella", criterio: "criterio" }).success,
+    ).toBe(false);
   });
 });
