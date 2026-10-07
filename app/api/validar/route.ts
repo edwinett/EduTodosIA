@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { validarRetoSchema } from "@/lib/validacion/esquemas";
-import { validarReto } from "@/lib/juego/soluciones.server";
-import { getReto } from "@/data/misiones";
+import { validarRespuestaTipo } from "@/lib/juego/validadores";
+import { obtenerRetoServidor } from "@/lib/contenido/servidor";
 import { puntajeReto } from "@/lib/juego/puntaje";
 import { prisma } from "@/lib/db/prisma";
 
 export const runtime = "nodejs";
 
-// POST /api/validar  — valida la respuesta de un reto EN EL SERVIDOR.
+// POST /api/validar — valida la respuesta de un reto EN EL SERVIDOR, leyendo la
+// solución desde el catálogo (base de datos) y validando de forma dinámica por tipo.
 export async function POST(req: Request) {
   let body: unknown;
   try {
@@ -26,24 +27,23 @@ export async function POST(req: Request) {
 
   const { retoId, nodo, respuesta, tiempoMs, pistasUsadas, partidaId } = parsed.data;
 
-  const reto = getReto(retoId);
-  if (!reto || reto.nodo !== nodo) {
+  const reto = await obtenerRetoServidor(retoId);
+  if (!reto || reto.nodoSlug !== nodo) {
     return NextResponse.json({ error: "Reto no encontrado" }, { status: 404 });
   }
 
-  const { correcto } = validarReto(retoId, respuesta);
+  const correcto = validarRespuestaTipo(reto.tipo, reto.solucion, respuesta);
 
   const puntos = correcto
     ? puntajeReto({
         base: reto.puntos,
         tiempoMs,
-        tiempoObjetivoMs: 2 * 60 * 1000, // objetivo por reto: 2 min
+        tiempoObjetivoMs: 2 * 60 * 1000,
         pistasUsadas,
         correcto,
       })
     : 0;
 
-  // Registro de intento (si hay partida persistida). No bloquea la respuesta.
   if (partidaId) {
     try {
       const partida = await prisma.partida.findUnique({ where: { id: partidaId } });
@@ -53,7 +53,8 @@ export async function POST(req: Request) {
             partidaId,
             retoId,
             nodo,
-            respuesta: typeof respuesta === "object" ? JSON.stringify(respuesta) : String(respuesta),
+            respuesta:
+              typeof respuesta === "object" ? JSON.stringify(respuesta) : String(respuesta),
             correcto,
             tiempoMs,
             pistasUsadas,
@@ -68,7 +69,6 @@ export async function POST(req: Request) {
   return NextResponse.json({
     correcto,
     puntos,
-    // El feedback educativo solo se entrega cuando la respuesta es correcta.
     feedbackEducativo: correcto ? reto.feedbackEducativo : null,
   });
 }

@@ -97,11 +97,13 @@ tests/               unit/ (Vitest), e2e/ (Playwright)
 
 ## 🗃️ Modelo de datos (Prisma)
 
-`Usuario`, `Equipo`, `Partida`, `IntentoReto`, `Insignia`, `InsigniaObtenida`
+`User`/`Account`/`Session`/`VerificationToken` (Auth.js), `Equipo`, `SesionAula`, `Partida`,
+`IntentoReto`, `Insignia`, `InsigniaObtenida` y el catálogo editable `Nodo`/`Reto`/`Pista`
 (ver `prisma/schema.prisma`). Para mantener portabilidad **SQLite ⇄ Postgres** no se usan enums
 ni arreglos nativos: los roles/estados son `String` validados con Zod y las listas se guardan como
-JSON en texto. El catálogo de nodos/misiones/retos/pistas es contenido versionado en `data/`
-(no requiere tabla editable para jugar), y los intentos y resultados sí se persisten.
+JSON en texto. **El juego lee su contenido del catálogo en base de datos** (`Nodo`/`Reto`/`Pista`),
+expuesto sin soluciones por `/api/contenido`; `data/misiones.ts` es ahora solo la **fuente de
+siembra** (seed). Intentos y resultados se persisten.
 
 ---
 
@@ -159,39 +161,83 @@ El contenido de los nodos se basa en fuentes públicas que conviene citar en el 
 
 ---
 
+## 🔐 Autenticación y roles (Auth.js)
+
+El acceso usa **Auth.js (NextAuth v5)** con dos roles: **ESTUDIANTE** y **DOCENTE**.
+
+- **Dos formas de ingresar:** credenciales (correo + contraseña) o **enlace mágico**
+  (en desarrollo el enlace se imprime en la consola del servidor; en producción se configura SMTP
+  con `EMAIL_SERVER`/`EMAIL_FROM`).
+- **Registro:** `/registro`. Para crear una cuenta DOCENTE se exige el código de invitación
+  `CODIGO_INVITACION_DOCENTE` (por defecto `UT-DOCENTE`), así los estudiantes no se auto-asignan docentes.
+- **Middleware** (`middleware.ts`) protege las rutas: `/docente/*` requiere rol DOCENTE;
+  `/mapa`, `/sala/*`, `/final` y `/juego/*` requieren sesión. La lógica vive en `auth.config.ts`
+  (edge-safe) y la configuración completa con adaptador Prisma + bcrypt en `auth.ts` (Node).
+- **Cuentas de prueba** (creadas por el seed):
+  - Docente: `docente@ut.edu.co` / `docente123`
+  - Estudiante: `estudiante@ut.edu.co` / `estudiante123`
+
 ## 👩‍🏫 Guía docente
 
-1. Entra a `/docente` con la clave de `DOCENTE_PASSWORD` (por defecto `tolima2024` en desarrollo).
-2. **Ranking:** seguimiento en vivo por equipo, con filtros y **exportación a CSV**.
-3. **Diagnóstico:** pega el `ID de partida` para ver intentos, aciertos y pistas por reto.
-4. **Insignias:** catálogo y criterios.
-5. Comparte el **código de equipo** de 6 caracteres con cada grupo para que se unan.
+1. Ingresa a `/docente` (requiere rol DOCENTE).
+2. **Modo aula:** crea una sesión de aula; obtendrás un **código de 6 caracteres**. Compártelo con
+   los estudiantes para que, al crear su equipo, lo peguen en "Código de aula". El dashboard
+   `/docente/aula/[codigo]` muestra el **progreso en vivo** de cada equipo (polling cada 5 s):
+   nodos completados, retos resueltos, intentos y pistas.
+3. **Ranking:** seguimiento por equipo con filtros y **exportación a CSV**.
+4. **Diagnóstico:** pega el `ID de partida` para ver intentos, aciertos y pistas por reto.
+5. **Edición de contenido** (`/docente/contenido`): **CRUD** de nodos, retos, pistas e insignias
+   mediante **Server Actions** con validación **Zod**.
+
+> ✅ El CRUD de `/docente/contenido` edita el **catálogo en base de datos** (`Nodo`/`Reto`/`Pista`/
+> `Insignia`) y **el juego lo lee en vivo**: editar un enunciado, una pista, los puntos, la clave de
+> un candado o la solución se refleja en la siguiente partida. La validación sigue ocurriendo solo
+> en el servidor, ahora con **validadores dinámicos por tipo** (`lib/juego/validadores.ts`) que leen
+> la solución del catálogo. Añadir un reto de un **tipo ya soportado** a un nodo núcleo aparece y se
+> valida; tipos de reto completamente nuevos requieren además su widget de interfaz (ver más abajo).
 
 Sugerencia de sesión (90 min): 10' encuadre → 45' partida → 20' socialización de datos
 ambientales por nodo → 15' reflexión final (brecha digital, territorio y rol como licenciados).
 
 ---
 
-## ☁️ Despliegue (Vercel + Postgres)
+## ☁️ Despliegue (Vercel + Neon Postgres)
 
-1. En `prisma/schema.prisma` cambia `provider = "sqlite"` por `provider = "postgresql"`.
-2. Crea una base Postgres (Vercel Postgres, Neon o Supabase) y copia su URL.
-3. En Vercel define las variables de entorno: `DATABASE_URL`, `DOCENTE_PASSWORD`,
-   `SESSION_SECRET`, `NEXT_PUBLIC_DURACION_PARTIDA_SEG`.
-4. Ejecuta migraciones: `npx prisma migrate deploy` (o `prisma db push`) contra la base de prod.
-5. Despliega. El `build` ya corre `prisma generate` automáticamente.
+El `datasource` ya es `postgresql` con `directUrl`.
+
+1. En **Neon** crea un proyecto y copia **dos** cadenas: la *pooled* (tiene `-pooler`) y la *directa*.
+2. En **Vercel** importa el repo (framework Next.js, se detecta solo) y define las variables:
+   - `DATABASE_URL` = cadena **pooled** de Neon (con `?sslmode=require`).
+   - `DIRECT_URL` = cadena **directa** de Neon.
+   - `AUTH_SECRET` = `openssl rand -base64 32`.
+   - `AUTH_URL` = la URL pública (ej. `https://tu-proyecto.vercel.app`) — opcional con `trustHost`.
+   - `CODIGO_INVITACION_DOCENTE` (opcional), `NEXT_PUBLIC_DURACION_PARTIDA_SEG` (opcional).
+3. Despliega. En Vercel se usa el script **`vercel-build`**, que antes de compilar ejecuta
+   `prisma db push` (crea el esquema) y el seed (idempotente: nodos/retos/insignias + usuarios demo).
+   No necesitas correr nada a mano. (Para crear el esquema desde tu máquina en cambio:
+   `DATABASE_URL=<directa> DIRECT_URL=<directa> npx prisma db push && npx prisma db seed`.)
+
+> El juego lee el contenido del catálogo en BD **siempre** (no hay bandera para activarlo/desactivarlo).
 
 ---
 
 ## 🔭 Siguientes pasos (alcance futuro)
 
-Esta entrega prioriza, como se pidió, **motor de juego + 4 nodos jugables + ranking + insignias +
-panel docente mínimo**, todo verificado (`build`, `test` y `lint` en verde). Quedan como mejoras:
+Ya implementado y verificado (`build`, `test`, `lint` y **E2E** en verde): motor de juego + 4 nodos +
+ranking + insignias + **Auth.js (credenciales + enlace mágico, 2 roles, middleware)** +
+**panel docente con CRUD (Server Actions + Zod)** + **modo aula con dashboard en vivo (polling 5 s)** +
+**juego conectado al catálogo editable** (lee `Nodo`/`Reto`/`Pista` de la BD vía `/api/contenido`,
+validadores dinámicos por tipo en el servidor).
 
-- **Auth.js** (credenciales + *magic link*) para login persistente de estudiantes y docentes;
-  hoy el acceso docente usa una clave simple por cookie y el equipo se identifica por código.
-- Edición de salas/retos/pistas desde la UI docente (hoy el contenido es versionado en `data/`).
-- Exportación a **PDF** (hoy CSV) y ranking por **WebSocket** (hoy *polling*).
+Quedan como mejoras:
+
+- **Widgets para tipos de reto nuevos:** cada `tipo` de reto tiene un componente de interfaz; crear
+  un tipo inédito desde el panel requiere añadir su widget en `components/retos/`. Los tipos actuales
+  (dial, morse, binario-ascii, cronológico, numérico y opciones) ya se renderizan y validan dinámicamente.
+- **Nodos extra:** los 4 nodos núcleo (radio/tv/telefono/internet) siguen siendo el eje que habilita
+  la caja fuerte final; nodos adicionales del catálogo se muestran pero no modifican ese requisito.
+- **Enlace mágico con SMTP real** en producción (hoy el enlace se imprime en consola en desarrollo).
+- Exportación a **PDF** (hoy CSV) y progreso por **WebSocket** (hoy *polling*).
 - Muestras de audio reales con **Howler.js** en `/public/audio` (hoy efectos sintetizados).
 
 ---

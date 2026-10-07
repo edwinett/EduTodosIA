@@ -85,7 +85,7 @@ export interface ProgresoReto {
 }
 
 export interface ProgresoNodo {
-  nodo: NodoId;
+  nodo: string;
   estado: EstadoNodo;
   candadoAbierto: boolean;
   retos: Record<string, ProgresoReto>;
@@ -97,8 +97,9 @@ export interface EstadoJuego {
   nombreEquipo: string | null;
   codigoEquipo: string | null;
   avatar: string;
-  nodos: Record<NodoId, ProgresoNodo>;
-  claves: Record<NodoId, string | null>;
+  // Progreso indexado por slug de nodo (el contenido es dinámico, viene del catálogo).
+  nodos: Record<string, ProgresoNodo>;
+  claves: Record<string, string | null>;
   puntaje: number;
   insignias: string[]; // códigos
   inicioMs: number | null;

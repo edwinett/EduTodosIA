@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useJuego } from "@/lib/juego/store";
 import { HUD } from "@/components/juego/HUD";
-import { NODOS } from "@/data/misiones";
+import { useContenido } from "@/lib/contenido/cliente";
 import { todasLasClaves } from "@/lib/juego/reglas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,12 +23,14 @@ const ICONO: Record<string, string> = {
 export default function MapaPage() {
   const router = useRouter();
   const estado = useJuego();
+  const { nodos, cargando } = useContenido();
 
   useEffect(() => {
     if (!estado.equipoId && !estado.nombreEquipo) router.replace("/lobby");
   }, [estado.equipoId, estado.nombreEquipo, router]);
 
   const finalDisponible = todasLasClaves(estado);
+  const nodosJugables = nodos.filter((n) => n.id !== "final");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-senal-crt to-background">
@@ -41,8 +43,12 @@ export default function MapaPage() {
           </p>
         </div>
 
+        {cargando && (
+          <p className="text-sm text-muted-foreground">Cargando contenido…</p>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2">
-          {NODOS.filter((n) => n.id !== "final").map((nodo, i) => {
+          {nodosJugables.map((nodo, i) => {
             const prog = estado.nodos[nodo.id];
             const completado = prog?.candadoAbierto;
             return (

@@ -1,33 +1,79 @@
 // Esquema de datos de "SEÑAL PERDIDA".
-// Dev: SQLite. Prod: cambiar provider a "postgresql" y DATABASE_URL (ver README).
-// Nota: no usamos enums ni arrays nativos para mantener portabilidad SQLite <-> Postgres;
-// los roles son String validados por Zod y las listas se guardan como JSON en texto.
+// Postgres (Neon en producción; también sirve para desarrollo).
+// Sin enums ni arrays nativos: roles/estados son String validados por Zod y las listas
+// se guardan como JSON en texto (facilita portabilidad y migraciones).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Conexión agrupada (pooled) para el runtime serverless de Vercel.
+  url       = env("DATABASE_URL")
+  // Conexión directa para migraciones / db push (Neon la expone aparte).
+  directUrl = env("DIRECT_URL")
 }
 
-model Usuario {
-  id          String   @id @default(cuid())
-  nombre      String
-  email       String   @unique
-  rol         String   @default("ESTUDIANTE") // ESTUDIANTE | DOCENTE
-  universidad String?
-  programa    String?
-  semestre    Int?
-  creadoEn    DateTime @default(now())
+// ----------------------------------------------------------------- Auth.js
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  rol           String    @default("ESTUDIANTE") // ESTUDIANTE | DOCENTE
+  passwordHash  String?
+  universidad   String?
+  programa      String?
+  semestre      Int?
+  creadoEn      DateTime  @default(now())
 
   equipoId String?
   equipo   Equipo? @relation(fields: [equipoId], references: [id])
 
-  insignias InsigniaObtenida[]
+  accounts       Account[]
+  sessions       Session[]
+  insignias      InsigniaObtenida[]
+  sesionesAula   SesionAula[]       @relation("DocenteSesiones")
 }
 
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ----------------------------------------------------------------- Juego
 model Equipo {
   id           String    @id @default(cuid())
   nombre       String
@@ -39,9 +85,25 @@ model Equipo {
   semestre     Int?
   creadoEn     DateTime  @default(now())
 
-  integrantes Usuario[]
+  sesionAulaId String?
+  sesionAula   SesionAula? @relation(fields: [sesionAulaId], references: [id])
+
+  integrantes User[]
   partidas    Partida[]
   insignias   InsigniaObtenida[]
+}
+
+model SesionAula {
+  id        String   @id @default(cuid())
+  codigo    String   @unique // 6 caracteres (código de aula)
+  nombre    String
+  estado    String   @default("ABIERTA") // ABIERTA | CERRADA
+  creadaEn  DateTime @default(now())
+
+  docenteId String
+  docente   User   @relation("DocenteSesiones", fields: [docenteId], references: [id])
+
+  equipos Equipo[]
 }
 
 model Partida {
@@ -51,7 +113,7 @@ model Partida {
   inicio          DateTime  @default(now())
   fin             DateTime?
   estado          String    @default("EN_CURSO") // EN_CURSO | GANADA | PERDIDA
-  nodoActual      String?   // radio | tv | telefono | internet | final
+  nodoActual      String?
   clavesObtenidas String    @default("[]") // JSON string[]
   puntaje         Int       @default(0)
   precision       Float     @default(0)
@@ -60,16 +122,16 @@ model Partida {
 }
 
 model IntentoReto {
-  id          String   @id @default(cuid())
-  partidaId   String
-  partida     Partida  @relation(fields: [partidaId], references: [id])
-  retoId      String
-  nodo        String
-  respuesta   String
-  correcto    Boolean
-  tiempoMs    Int
-  pistasUsadas Int     @default(0)
-  creadoEn    DateTime @default(now())
+  id           String   @id @default(cuid())
+  partidaId    String
+  partida      Partida  @relation(fields: [partidaId], references: [id])
+  retoId       String
+  nodo         String
+  respuesta    String
+  correcto     Boolean
+  tiempoMs     Int
+  pistasUsadas Int      @default(0)
+  creadoEn     DateTime @default(now())
 }
 
 model Insignia {
@@ -87,11 +149,61 @@ model InsigniaObtenida {
   id         String   @id @default(cuid())
   insigniaId String
   insignia   Insignia @relation(fields: [insigniaId], references: [id])
-  usuarioId  String?
-  usuario    Usuario? @relation(fields: [usuarioId], references: [id])
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
   equipoId   String?
   equipo     Equipo?  @relation(fields: [equipoId], references: [id])
   fecha      DateTime @default(now())
 
   @@unique([insigniaId, equipoId])
+}
+
+// ------------------------------------------------- Contenido editable (CRUD docente)
+// Catálogo de autoría. El juego usa data/misiones.ts como contenido jugable; estas tablas
+// permiten al docente crear/editar y se siembran desde data/ (ver README y seed.ts).
+model Nodo {
+  id                String  @id @default(cuid())
+  slug              String  @unique // radio | tv | telefono | internet | final
+  nombre            String
+  descripcion       String
+  narrativa         String
+  hitoHistorico     String
+  datoAmbiental     String
+  dificultad        String  // facil | media | dificil
+  tiempoSugeridoMin Int     @default(10)
+  tipoCandado       String  // numerico | palabra | combinacion | cronologico
+  pistaCandado      String
+  claveParcial      String  @default("") // secreto (solo servidor)
+  orden             Int     @default(0)
+
+  retos Reto[]
+}
+
+model Reto {
+  id                String @id @default(cuid())
+  nodoId            String
+  nodo              Nodo   @relation(fields: [nodoId], references: [id], onDelete: Cascade)
+  slug              String @unique
+  tipo              String
+  titulo            String
+  enunciado         String
+  dificultad        String
+  puntos            Int    @default(100)
+  datosJson         String @default("{}") // JSON con datos públicos del reto
+  solucionJson      String @default("null") // secreto (solo servidor)
+  feedbackEducativo String
+  orden             Int    @default(0)
+
+  pistas Pista[]
+}
+
+model Pista {
+  id          String @id @default(cuid())
+  retoId      String
+  reto        Reto   @relation(fields: [retoId], references: [id], onDelete: Cascade)
+  nivel       Int // 1 | 2 | 3
+  texto       String
+  costoPuntos Int    @default(50)
+
+  @@unique([retoId, nivel])
 }

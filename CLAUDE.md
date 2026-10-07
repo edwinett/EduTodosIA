@@ -13,11 +13,30 @@ Guía para cualquier agente o persona que modifique este proyecto.
 ## Seguridad del juego (no romper)
 
 - ⛔ **Nunca validar en el cliente las respuestas de los retos ni las claves de los candados.**
-  Las soluciones viven **solo** en `lib/juego/soluciones.server.ts` (sufijo `.server`) y se
-  comprueban en `/api/validar` y `/api/validar/candado`. Ese archivo **no debe importarse jamás**
-  desde un componente cliente ni desde `data/` o `lib/juego/store.ts`.
+  El contenido del juego vive en el **catálogo de la base de datos** (`Nodo`/`Reto`/`Pista`). Las
+  soluciones (`Reto.solucionJson`) y las claves (`Nodo.claveParcial`) solo se leen en el servidor
+  (`lib/contenido/servidor.ts`) y se comprueban en `/api/validar` y `/api/validar/candado` con los
+  **validadores dinámicos por tipo** de `lib/juego/validadores.ts` (lógica pura, server-only).
+- El cliente obtiene el contenido **sin soluciones** vía `/api/contenido` (`ContenidoProvider` /
+  `useContenido`). `lib/contenido/servidor.ts` nunca debe importarse desde un componente cliente.
+- `data/misiones.ts` y `lib/juego/soluciones.server.ts` son ahora **fuente de siembra** (seed), no
+  el runtime del juego. No exponer soluciones/claves al cliente desde `data/` ni desde el store.
 - ⏱️ **El timer es autoritativo en el backend** (`/api/timer`). El cliente solo refleja el valor.
-- `data/misiones.ts` es contenido **público**: no agregar ahí soluciones, claves ni respuestas.
+
+## Autenticación (Auth.js v5)
+
+- Dos roles: `ESTUDIANTE` y `DOCENTE`. Sesión **JWT** (requerida por el proveedor Credentials).
+- `auth.config.ts` es **edge-safe** (sin Prisma ni bcrypt) y lo usa `middleware.ts`.
+  `auth.ts` tiene el adaptador Prisma, Credentials (bcrypt) y el enlace mágico (Nodemailer).
+- El rol se propaga en los callbacks `jwt`/`session`. No hacer consultas a BD en el runtime edge.
+- Proteger rutas nuevas añadiéndolas a `RUTAS_DOCENTE`/`RUTAS_JUEGO` en `auth.config.ts` y al
+  `matcher` de `middleware.ts`.
+- En Server Actions / route handlers usar `requireUsuario()` / `requireDocente()` (`lib/auth/guards.ts`).
+
+## CRUD de contenido
+
+- Mutaciones vía **Server Actions** (`app/(docente)/docente/contenido/actions.ts`) con validación
+  **Zod** y `requireDocente()`. Nunca exponer `claveParcial`/`solucionJson` al cliente.
 
 ## Estado
 

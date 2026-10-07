@@ -44,7 +44,8 @@ export const unirseEquipoSchema = z.object({
     .trim()
     .toUpperCase()
     .regex(/^[A-Z0-9]{6}$/, "El código debe tener 6 caracteres alfanuméricos"),
-  integrante: z.string().min(2).max(60),
+  // El integrante se toma de la sesión autenticada; se mantiene opcional por compatibilidad.
+  integrante: z.string().min(2).max(60).optional(),
 });
 export type UnirseEquipoInput = z.infer<typeof unirseEquipoSchema>;
 
@@ -73,3 +74,109 @@ export type RankingQuery = z.infer<typeof rankingQuerySchema>;
 export const docenteLoginSchema = z.object({
   password: z.string().min(1).max(100),
 });
+
+// ---- Autenticación (Auth.js) ----
+export const loginCredsSchema = z.object({
+  email: z.string().email("Correo inválido").max(120),
+  password: z.string().min(6, "Mínimo 6 caracteres").max(100),
+});
+export type LoginCredsInput = z.infer<typeof loginCredsSchema>;
+
+export const registroSchema = z.object({
+  nombre: z.string().min(2, "Nombre muy corto").max(80),
+  email: z.string().email("Correo inválido").max(120),
+  password: z.string().min(6, "Mínimo 6 caracteres").max(100),
+  rol: z.enum(ROLES_VALIDOS).default("ESTUDIANTE"),
+  programa: z.string().max(80).optional(),
+  semestre: z.coerce.number().int().min(1).max(12).optional(),
+});
+export type RegistroInput = z.infer<typeof registroSchema>;
+
+// ---- Modo aula ----
+export const crearSesionAulaSchema = z.object({
+  nombre: z.string().min(2, "Nombre muy corto").max(80),
+});
+
+export const unirseAulaSchema = z.object({
+  codigoAula: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9]{6}$/, "El código de aula debe tener 6 caracteres"),
+});
+
+// ---- CRUD de contenido (Server Actions docente) ----
+const jsonString = z
+  .string()
+  .max(5000)
+  .refine((s) => {
+    try {
+      JSON.parse(s);
+      return true;
+    } catch {
+      return false;
+    }
+  }, "JSON inválido");
+
+export const nodoCrudSchema = z.object({
+  id: z.string().optional(),
+  slug: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9-]{2,20}$/, "slug inválido (minúsculas, números, guiones)"),
+  nombre: z.string().min(2).max(60),
+  descripcion: z.string().min(2).max(300),
+  narrativa: z.string().min(2).max(2000),
+  hitoHistorico: z.string().min(2).max(1000),
+  datoAmbiental: z.string().min(2).max(1000),
+  dificultad: z.enum(["facil", "media", "dificil"]),
+  tiempoSugeridoMin: z.coerce.number().int().min(1).max(60),
+  tipoCandado: z.enum(["numerico", "palabra", "combinacion", "cronologico"]),
+  pistaCandado: z.string().min(2).max(300),
+  claveParcial: z.string().max(100).default(""),
+  orden: z.coerce.number().int().min(0).max(99).default(0),
+});
+export type NodoCrudInput = z.infer<typeof nodoCrudSchema>;
+
+export const retoCrudSchema = z.object({
+  id: z.string().optional(),
+  nodoId: z.string().min(1),
+  slug: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9-]{2,40}$/, "slug inválido"),
+  tipo: z.string().min(2).max(40),
+  titulo: z.string().min(2).max(120),
+  enunciado: z.string().min(2).max(1000),
+  dificultad: z.enum(["facil", "media", "dificil"]),
+  puntos: z.coerce.number().int().min(0).max(1000),
+  datosJson: jsonString.default("{}"),
+  solucionJson: jsonString.default("null"),
+  feedbackEducativo: z.string().min(2).max(1000),
+  orden: z.coerce.number().int().min(0).max(99).default(0),
+});
+export type RetoCrudInput = z.infer<typeof retoCrudSchema>;
+
+export const pistaCrudSchema = z.object({
+  id: z.string().optional(),
+  retoId: z.string().min(1),
+  nivel: z.coerce.number().int().min(1).max(3),
+  texto: z.string().min(2).max(500),
+  costoPuntos: z.coerce.number().int().min(0).max(1000),
+});
+export type PistaCrudInput = z.infer<typeof pistaCrudSchema>;
+
+export const insigniaCrudSchema = z.object({
+  id: z.string().optional(),
+  codigo: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9-]{2,40}$/, "código inválido"),
+  nombre: z.string().min(2).max(60),
+  descripcion: z.string().min(2).max(300),
+  icono: z.string().min(1).max(30),
+  criterio: z.string().min(2).max(300),
+});
+export type InsigniaCrudInput = z.infer<typeof insigniaCrudSchema>;
+
+export const idSchema = z.object({ id: z.string().min(1).max(64) });

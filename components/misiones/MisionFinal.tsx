@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useJuego } from "@/lib/juego/store";
-import { getNodo } from "@/data/misiones";
+import { useContenido } from "@/lib/contenido/cliente";
 import { RetoInteractivo } from "@/components/retos/RetoInteractivo";
 import { CandadoCombinacion } from "@/components/juego/CandadoCombinacion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { evaluarInsignias } from "@/lib/juego/insignias";
 export function MisionFinal() {
   const router = useRouter();
   const estado = useJuego();
+  const { getNodo } = useContenido();
   const nodo = getNodo("final");
 
   const tieneClaves = NODOS_ORDEN.every((n) => estado.claves[n] !== null);
