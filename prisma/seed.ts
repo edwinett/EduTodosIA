@@ -13,7 +13,7 @@ const SOLUCION_AUTORIA: Record<string, unknown> = {
   "radio-onda": 500,
   "radio-morse": "TOLIMA",
   "radio-quiz": "Alfabetizar y educar a la población campesina rural",
-  "tv-pixelado": "RTC",
+  "tv-pixelado": ["RTC", "RTVC"],
   "tv-estandar": "NTSC",
   "tv-cronologia": ["h1954", "h1979", "h1998"],
   "tel-conmutador": 8,
@@ -24,7 +24,8 @@ const SOLUCION_AUTORIA: Record<string, unknown> = {
   "net-ip": "8.8.8.8",
   "net-dns": ".co",
   "net-http": "404 (No encontrado)",
-  "final-reflexion": "opción 2",
+  "final-reflexion":
+    "Conectar el territorio permite monitorear, divulgar y proteger el ambiente, y cerrar la brecha digital rural.",
 };
 
 async function main() {
