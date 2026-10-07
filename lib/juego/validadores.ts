@@ -25,10 +25,33 @@ export function validarRespuestaTipo(
   solucion: unknown,
   respuesta: unknown,
 ): boolean {
-  if (tipo === "cronologico") {
+  // Tipos cuya respuesta es un arreglo ORDENADO (cronología de hitos, piezas de puzzle).
+  if (tipo === "cronologico" || tipo === "rompecabezas") {
     const resp = Array.isArray(respuesta) ? respuesta.map(normalizar) : [];
     const sol = Array.isArray(solucion) ? solucion.map(normalizar) : [];
     return sol.length > 0 && resp.length === sol.length && resp.every((x, i) => x === sol[i]);
+  }
+
+  // Crucigrama: la solución y la respuesta son mapas { idEntrada: palabra }. Todas deben coincidir.
+  if (tipo === "crucigrama") {
+    if (!solucion || typeof solucion !== "object" || Array.isArray(solucion)) return false;
+    if (!respuesta || typeof respuesta !== "object" || Array.isArray(respuesta)) return false;
+    const sol = solucion as Record<string, unknown>;
+    const resp = respuesta as Record<string, unknown>;
+    const claves = Object.keys(sol);
+    return (
+      claves.length > 0 &&
+      claves.every((k) => igualNormalizado(sol[k], resp[k]))
+    );
+  }
+
+  // Sopa de letras: conjunto de palabras encontradas (sin importar el orden).
+  if (tipo === "sopa-de-letras") {
+    const sol = new Set((Array.isArray(solucion) ? solucion : []).map(normalizar));
+    const resp = new Set((Array.isArray(respuesta) ? respuesta : []).map(normalizar));
+    if (sol.size === 0 || resp.size !== sol.size) return false;
+    for (const w of sol) if (!resp.has(w)) return false;
+    return true;
   }
 
   if (tipo === "dial") {

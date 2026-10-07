@@ -26,7 +26,13 @@ export type TipoReto =
   | "ip-valida"
   | "dns"
   | "http"
-  | "reflexion";
+  | "reflexion"
+  // Mecánicas nuevas:
+  | "adivinanza"
+  | "ahorcado"
+  | "rompecabezas"
+  | "crucigrama"
+  | "sopa-de-letras";
 
 export type Dificultad = "facil" | "media" | "dificil";
 
@@ -43,6 +49,8 @@ export interface RetoPublico {
   // Datos auxiliares visibles para el cliente (sin la solución).
   datos?: Record<string, unknown>;
   feedbackEducativo: string;
+  imagenUrl?: string | null;
+  videoUrl?: string | null;
   pistas: PistaPublica[];
 }
 

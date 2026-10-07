@@ -105,6 +105,10 @@ export function FormReto({ nodoId, reto }: { nodoId: string; reto?: RetoLite }) 
       </div>
       <Campo name="enunciado" label="Enunciado" as="textarea" defaultValue={reto?.enunciado} />
       <Campo name="feedbackEducativo" label="Feedback educativo" as="textarea" defaultValue={reto?.feedbackEducativo} />
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Campo name="imagenUrl" label="Imagen (URL, opcional)" defaultValue={reto?.imagenUrl ?? ""} />
+        <Campo name="videoUrl" label="Video YouTube (URL, opcional)" defaultValue={reto?.videoUrl ?? ""} />
+      </div>
       <Campo name="datosJson" label="Datos (JSON)" as="textarea" defaultValue={reto?.datosJson} />
       <Campo name="solucionJson" label="Solución (JSON, secreta)" as="textarea" defaultValue={reto?.solucionJson} />
       <div className="flex items-center gap-2">
@@ -215,6 +219,8 @@ export interface RetoLite {
   datosJson: string;
   solucionJson: string;
   feedbackEducativo: string;
+  imagenUrl?: string | null;
+  videoUrl?: string | null;
   orden: number;
 }
 export interface PistaLite {

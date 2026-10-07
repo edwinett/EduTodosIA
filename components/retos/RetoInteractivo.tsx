@@ -10,6 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { PanelPistas } from "@/components/juego/PanelPistas";
 import { DialSintonia } from "@/components/retos/DialSintonia";
 import { Morse } from "@/components/retos/Morse";
+import { Multimedia } from "@/components/retos/Multimedia";
+import { Ahorcado } from "@/components/retos/Ahorcado";
+import { Rompecabezas } from "@/components/retos/Rompecabezas";
+import { Crucigrama, type EntradaCrucigrama } from "@/components/retos/Crucigrama";
+import { SopaDeLetras } from "@/components/retos/SopaDeLetras";
 import { CandadoCronologico } from "@/components/juego/CandadoCronologico";
 import type { ItemOrdenable } from "@/components/juego/ListaOrdenable";
 import { sonidoExito, sonidoError } from "@/lib/audio/sonidos";
@@ -20,7 +25,17 @@ interface Props {
   onResuelto: (info: { puntos: number; primerIntento: boolean }) => void;
 }
 
-type Respuesta = string | number | string[];
+type Respuesta = string | number | string[] | Record<string, string>;
+
+// Tipos cuyo widget se autoenvía (no muestran el botón genérico "Comprobar respuesta").
+const TIPOS_AUTOENVIO = new Set([
+  "cronologico",
+  "ahorcado",
+  "rompecabezas",
+  "crucigrama",
+  "sopa-de-letras",
+]);
+const TIPOS_TEXTO = new Set(["t9", "pixelado", "adivinanza"]);
 
 export function RetoInteractivo({ reto, onResuelto }: Props) {
   const estado = useJuego();
@@ -97,6 +112,8 @@ export function RetoInteractivo({ reto, onResuelto }: Props) {
       <CardContent className="space-y-4">
         <p className="text-sm">{reto.enunciado}</p>
 
+        <Multimedia imagenUrl={reto.imagenUrl} videoUrl={reto.videoUrl} titulo={reto.titulo} />
+
         {/* Entrada específica por tipo de reto */}
         {!yaResuelto && (
           <div className="space-y-3">
@@ -166,7 +183,7 @@ export function RetoInteractivo({ reto, onResuelto }: Props) {
                 onEnviar={() => enviar(respuesta)}
               />
             )}
-            {["t9", "pixelado"].includes(reto.tipo) && (
+            {TIPOS_TEXTO.has(reto.tipo) && (
               <EntradaTexto
                 valor={String(respuesta)}
                 onChange={(v) => setRespuesta(v.toUpperCase())}
@@ -174,8 +191,45 @@ export function RetoInteractivo({ reto, onResuelto }: Props) {
               />
             )}
 
+            {reto.tipo === "ahorcado" && (
+              <Ahorcado
+                retoId={reto.id}
+                longitud={Number(reto.datos?.["longitud"] ?? 8)}
+                intentosMax={Number(reto.datos?.["intentosMax"] ?? 6)}
+                onEnviar={(palabra) => enviar(palabra)}
+              />
+            )}
+
+            {reto.tipo === "rompecabezas" && (
+              <Rompecabezas
+                filas={Number(reto.datos?.["filas"] ?? 3)}
+                columnas={Number(reto.datos?.["columnas"] ?? 3)}
+                imagen={reto.imagenUrl ?? (reto.datos?.["imagen"] as string | undefined)}
+                cargando={enviando}
+                onEnviar={(orden) => enviar(orden)}
+              />
+            )}
+
+            {reto.tipo === "crucigrama" && (
+              <Crucigrama
+                filas={Number(reto.datos?.["filas"] ?? 5)}
+                columnas={Number(reto.datos?.["columnas"] ?? 5)}
+                entradas={(reto.datos?.["entradas"] as EntradaCrucigrama[]) ?? []}
+                cargando={enviando}
+                onEnviar={(resp) => enviar(resp)}
+              />
+            )}
+
+            {reto.tipo === "sopa-de-letras" && (
+              <SopaDeLetras
+                grid={(reto.datos?.["grid"] as string[][]) ?? []}
+                palabras={(reto.datos?.["palabras"] as string[]) ?? []}
+                onEnviar={(encontradas) => enviar(encontradas)}
+              />
+            )}
+
             {/* Botón enviar para los tipos que no se autoenvían */}
-            {!opciones && reto.tipo !== "cronologico" && (
+            {!opciones && !TIPOS_AUTOENVIO.has(reto.tipo) && (
               <Button onClick={() => enviar(respuesta)} disabled={enviando}>
                 Comprobar respuesta
               </Button>

@@ -189,10 +189,12 @@ model Reto {
   enunciado         String
   dificultad        String
   puntos            Int    @default(100)
-  datosJson         String @default("{}") // JSON con datos públicos del reto
-  solucionJson      String @default("null") // secreto (solo servidor)
+  datosJson         String  @default("{}") // JSON con datos públicos del reto
+  solucionJson      String  @default("null") // secreto (solo servidor)
   feedbackEducativo String
-  orden             Int    @default(0)
+  imagenUrl         String? // imagen ilustrativa (opcional, editable por el docente)
+  videoUrl          String? // video de YouTube (opcional, editable por el docente)
+  orden             Int     @default(0)
 
   pistas Pista[]
 }

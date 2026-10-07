@@ -1,10 +1,10 @@
 import type { NodoId, ProgresoNodo, EstadoJuego } from "@/lib/juego/tipos";
 
 export const DURACION_PARTIDA_SEG = Number(
-  process.env.NEXT_PUBLIC_DURACION_PARTIDA_SEG ?? "2700",
-); // 45 min por defecto
+  process.env.NEXT_PUBLIC_DURACION_PARTIDA_SEG ?? "5400",
+); // 90 min por defecto
 
-export const AVISOS_SEG = [600, 300, 60]; // 10, 5 y 1 minuto
+export const AVISOS_SEG = [900, 300, 60]; // 15, 5 y 1 minuto
 
 export const NODOS_ORDEN = ["radio", "tv", "telefono", "internet"] as const satisfies readonly Exclude<
   NodoId,
