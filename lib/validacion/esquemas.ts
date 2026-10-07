@@ -5,11 +5,12 @@ export const ROLES_VALIDOS = ["ESTUDIANTE", "DOCENTE"] as const;
 
 export const nodoSchema = z.enum(NODOS_VALIDOS);
 
-// Respuesta a un reto: puede ser string, número o array (según el tipo de reto).
+// Respuesta a un reto: string, número, arreglo (orden/sopa) o mapa (crucigrama).
 export const respuestaRetoSchema = z.union([
   z.string().max(500),
   z.number(),
-  z.array(z.string().max(100)).max(20),
+  z.array(z.string().max(100)).max(64),
+  z.record(z.string().max(60), z.string().max(100)),
 ]);
 
 export const validarRetoSchema = z.object({
@@ -153,6 +154,8 @@ export const retoCrudSchema = z.object({
   datosJson: jsonString.default("{}"),
   solucionJson: jsonString.default("null"),
   feedbackEducativo: z.string().min(2).max(1000),
+  imagenUrl: z.string().max(500).optional().or(z.literal("")),
+  videoUrl: z.string().max(500).optional().or(z.literal("")),
   orden: z.coerce.number().int().min(0).max(99).default(0),
 });
 export type RetoCrudInput = z.infer<typeof retoCrudSchema>;

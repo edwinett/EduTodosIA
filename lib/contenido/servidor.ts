@@ -43,6 +43,8 @@ export async function obtenerNodosPublicos(): Promise<NodoPublico[]> {
       puntos: r.puntos,
       datos: parseJson(r.datosJson, {}) as Record<string, unknown>,
       feedbackEducativo: r.feedbackEducativo,
+      imagenUrl: r.imagenUrl,
+      videoUrl: r.videoUrl,
       pistas: r.pistas.map((p) => ({
         nivel: p.nivel as 1 | 2 | 3,
         texto: p.texto,

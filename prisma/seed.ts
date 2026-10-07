@@ -26,6 +26,15 @@ const SOLUCION_AUTORIA: Record<string, unknown> = {
   "net-http": "404 (No encontrado)",
   "final-reflexion":
     "Conectar el territorio permite monitorear, divulgar y proteger el ambiente, y cerrar la brecha digital rural.",
+  // --- Mecánicas nuevas ---
+  "radio-adivinanza": ["radio", "la radio"],
+  "radio-ahorcado": "SUTATENZA",
+  "tv-rompecabezas": ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"],
+  "tv-sopa": ["TELEVISION", "COLOR", "SEÑAL", "ANTENA", "CANAL"],
+  "tel-crucigrama": { h1: "PULSOS", v1: "DISCO" },
+  "tel-ahorcado": "CONMUTADOR",
+  "net-adivinanza": ["internet", "la red", "red"],
+  "net-sopa": ["RED", "DOMINIO", "SERVIDOR", "ENLACE", "DATOS"],
 };
 
 async function main() {
@@ -88,6 +97,8 @@ async function main() {
           datosJson: JSON.stringify(reto.datos ?? {}),
           solucionJson: JSON.stringify(SOLUCION_AUTORIA[reto.id] ?? null),
           feedbackEducativo: reto.feedbackEducativo,
+          imagenUrl: reto.imagenUrl ?? null,
+          videoUrl: reto.videoUrl ?? null,
           orden: r,
         },
         create: {
@@ -101,6 +112,8 @@ async function main() {
           datosJson: JSON.stringify(reto.datos ?? {}),
           solucionJson: JSON.stringify(SOLUCION_AUTORIA[reto.id] ?? null),
           feedbackEducativo: reto.feedbackEducativo,
+          imagenUrl: reto.imagenUrl ?? null,
+          videoUrl: reto.videoUrl ?? null,
           orden: r,
         },
       });

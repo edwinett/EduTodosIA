@@ -43,6 +43,35 @@ describe("validarRespuestaTipo", () => {
   });
 });
 
+describe("mecánicas nuevas", () => {
+  it("rompecabezas: orden exacto de piezas", () => {
+    const sol = ["p0", "p1", "p2", "p3"];
+    expect(validarRespuestaTipo("rompecabezas", sol, ["p0", "p1", "p2", "p3"])).toBe(true);
+    expect(validarRespuestaTipo("rompecabezas", sol, ["p1", "p0", "p2", "p3"])).toBe(false);
+  });
+
+  it("crucigrama: todas las entradas deben coincidir (normalizado)", () => {
+    const sol = { h1: "PULSOS", v1: "DISCO" };
+    expect(validarRespuestaTipo("crucigrama", sol, { h1: "pulsos", v1: "disco" })).toBe(true);
+    expect(validarRespuestaTipo("crucigrama", sol, { h1: "PULSOS", v1: "DISCA" })).toBe(false);
+    expect(validarRespuestaTipo("crucigrama", sol, { h1: "PULSOS" })).toBe(false);
+    expect(validarRespuestaTipo("crucigrama", sol, "no-objeto")).toBe(false);
+  });
+
+  it("sopa de letras: conjunto de palabras sin importar el orden", () => {
+    const sol = ["RED", "DATOS", "ENLACE"];
+    expect(validarRespuestaTipo("sopa-de-letras", sol, ["enlace", "red", "datos"])).toBe(true);
+    expect(validarRespuestaTipo("sopa-de-letras", sol, ["red", "datos"])).toBe(false);
+    expect(validarRespuestaTipo("sopa-de-letras", sol, ["red", "datos", "otra"])).toBe(false);
+  });
+
+  it("ahorcado y adivinanza se validan como texto", () => {
+    expect(validarRespuestaTipo("ahorcado", "SUTATENZA", "sutatenza")).toBe(true);
+    expect(validarRespuestaTipo("adivinanza", ["radio", "la radio"], "La Radio")).toBe(true);
+    expect(validarRespuestaTipo("adivinanza", ["radio", "la radio"], "television")).toBe(false);
+  });
+});
+
 describe("validarClaveCandado", () => {
   it("numérico/palabra: igualdad normalizada", () => {
     expect(validarClaveCandado("numerico", "1929", "1929")).toBe(true);

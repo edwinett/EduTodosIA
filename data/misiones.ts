@@ -1,4 +1,5 @@
 import type { NodoPublico } from "@/lib/juego/tipos";
+import { RETOS_EXTRA } from "@/data/extras";
 
 // Contenido público de los nodos (SIN soluciones). Fuentes históricas en el README:
 // RTVC/Señal Memoria, MinTIC, CRC, Banco de la República.
@@ -35,7 +36,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "La señal objetivo está en la parte alta del dial.", costoPuntos: 50 },
           { nivel: 2, texto: "Entre 98 y 102 MHz el ruido baja mucho.", costoPuntos: 100 },
-          { nivel: 3, texto: "La frecuencia correcta es 100.7 MHz (±0.2).", costoPuntos: 200 },
+          { nivel: 3, texto: "Búscala donde las barras de señal se llenan al máximo, en la parte alta del dial.", costoPuntos: 200 },
         ],
       },
       {
@@ -53,7 +54,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Convierte 600 kHz a Hz: 600000.", costoPuntos: 50 },
           { nivel: 2, texto: "Divide 300000000 entre 600000.", costoPuntos: 100 },
-          { nivel: 3, texto: "El resultado es 500 metros.", costoPuntos: 200 },
+          { nivel: 3, texto: "Es 3×10⁸ dividido entre 6×10⁵: un número redondo de cientos de metros.", costoPuntos: 200 },
         ],
       },
       {
@@ -74,7 +75,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Son 6 letras y es un lugar de Colombia.", costoPuntos: 50 },
           { nivel: 2, texto: "Empieza por T (-) y termina en A (.-).", costoPuntos: 100 },
-          { nivel: 3, texto: "La palabra es TOLIMA.", costoPuntos: 200 },
+          { nivel: 3, texto: "Es el departamento donde está la Universidad del Tolima.", costoPuntos: 200 },
         ],
       },
       {
@@ -99,7 +100,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Piensa en 'educación rural'.", costoPuntos: 50 },
           { nivel: 2, texto: "Su lema giraba en torno a aprender a leer y escribir.", costoPuntos: 100 },
-          { nivel: 3, texto: "La respuesta es la opción sobre alfabetización campesina.", costoPuntos: 200 },
+          { nivel: 3, texto: "Piensa en enseñar a leer y escribir en el campo, no en entretenimiento.", costoPuntos: 200 },
         ],
       },
     ],
@@ -136,7 +137,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Son las iniciales del operador público de medios.", costoPuntos: 50 },
           { nivel: 2, texto: "Radio Televisión de Colombia.", costoPuntos: 100 },
-          { nivel: 3, texto: "El código es RTC (o RTVC).", costoPuntos: 200 },
+          { nivel: 3, texto: "Son las iniciales de 'Radio Televisión de Colombia'.", costoPuntos: 200 },
         ],
       },
       {
@@ -154,7 +155,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Es el mismo que usaba Estados Unidos.", costoPuntos: 50 },
           { nivel: 2, texto: "Tiene 4 letras y empieza por N.", costoPuntos: 100 },
-          { nivel: 3, texto: "La respuesta es NTSC.", costoPuntos: 200 },
+          { nivel: 3, texto: "Es el estándar de EE. UU.: 4 letras que empiezan por N.", costoPuntos: 200 },
         ],
       },
       {
@@ -178,7 +179,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "La TV nació en los años 50.", costoPuntos: 50 },
           { nivel: 2, texto: "El color llegó en los 70.", costoPuntos: 100 },
-          { nivel: 3, texto: "Orden: 1954, 1979, 1998.", costoPuntos: 200 },
+          { nivel: 3, texto: "Primero blanco y negro, luego el color, y de último la competencia privada.", costoPuntos: 200 },
         ],
       },
     ],
@@ -215,7 +216,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "La ficha menciona el puerto directamente.", costoPuntos: 50 },
           { nivel: 2, texto: "Es un número de un solo dígito.", costoPuntos: 100 },
-          { nivel: 3, texto: "El puerto es 8.", costoPuntos: 200 },
+          { nivel: 3, texto: "La ficha menciona explícitamente el puerto para la Universidad.", costoPuntos: 200 },
         ],
       },
       {
@@ -233,7 +234,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Suma los pulsos de cada dígito: 2, 0(=10), 3.", costoPuntos: 50 },
           { nivel: 2, texto: "2 + 10 + 3.", costoPuntos: 100 },
-          { nivel: 3, texto: "El total es 15.", costoPuntos: 200 },
+          { nivel: 3, texto: "Suma 2 + (el 0 vale 10) + 3.", costoPuntos: 200 },
         ],
       },
       {
@@ -251,7 +252,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Toma la primera letra de cada tecla: 8=T, 3=D...", costoPuntos: 50 },
           { nivel: 2, texto: "8→T, 3→D, 5→J, 3→D, 7→P, 2→A... usa la primera letra.", costoPuntos: 100 },
-          { nivel: 3, texto: "La palabra es TDJDPA (usa la primera letra de cada tecla).", costoPuntos: 200 },
+          { nivel: 3, texto: "Toma SIEMPRE la primera letra de cada tecla pulsada, en orden.", costoPuntos: 200 },
         ],
       },
       {
@@ -269,7 +270,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Es uno de los indicativos que termina en 8.", costoPuntos: 50 },
           { nivel: 2, texto: "Ibagué comparte indicativo con el Eje Cafetero.", costoPuntos: 100 },
-          { nivel: 3, texto: "El indicativo es 608.", costoPuntos: 200 },
+          { nivel: 3, texto: "Es el indicativo que el Tolima comparte con el Eje Cafetero.", costoPuntos: 200 },
         ],
       },
     ],
@@ -307,7 +308,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Cada grupo de 8 bits es una letra.", costoPuntos: 50 },
           { nivel: 2, texto: "01010010 = 82 = 'R'.", costoPuntos: 100 },
-          { nivel: 3, texto: "La palabra es RED.", costoPuntos: 200 },
+          { nivel: 3, texto: "Traduce cada byte a decimal y busca su letra ASCII: forma una palabra de 3 letras.", costoPuntos: 200 },
         ],
       },
       {
@@ -327,7 +328,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Descarta 10.x, 172.16-31.x y 192.168.x.", costoPuntos: 50 },
           { nivel: 2, texto: "Queda una dirección famosa de DNS.", costoPuntos: 100 },
-          { nivel: 3, texto: "La respuesta es 8.8.8.8.", costoPuntos: 200 },
+          { nivel: 3, texto: "Descarta los rangos privados; queda el DNS público más famoso de Google.", costoPuntos: 200 },
         ],
       },
       {
@@ -345,7 +346,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Son las dos primeras letras del país.", costoPuntos: 50 },
           { nivel: 2, texto: "Colombia → .co.", costoPuntos: 100 },
-          { nivel: 3, texto: "La respuesta es .co.", costoPuntos: 200 },
+          { nivel: 3, texto: "Son las dos primeras letras del nombre del país.", costoPuntos: 200 },
         ],
       },
       {
@@ -363,7 +364,7 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Es el código más famoso de 'página no encontrada'.", costoPuntos: 50 },
           { nivel: 2, texto: "Empieza por 4 (errores del cliente).", costoPuntos: 100 },
-          { nivel: 3, texto: "La respuesta es 404.", costoPuntos: 200 },
+          { nivel: 3, texto: "Es el error de 'página no encontrada' que empieza por 4.", costoPuntos: 200 },
         ],
       },
     ],
@@ -407,12 +408,18 @@ export const NODOS: NodoPublico[] = [
         pistas: [
           { nivel: 1, texto: "Piensa en monitoreo ambiental y brecha digital.", costoPuntos: 50 },
           { nivel: 2, texto: "La respuesta integra territorio + ambiente + equidad.", costoPuntos: 100 },
-          { nivel: 3, texto: "Es la segunda opción.", costoPuntos: 200 },
+          { nivel: 3, texto: "La correcta integra monitoreo ambiental, divulgación y cierre de la brecha digital.", costoPuntos: 200 },
         ],
       },
     ],
   },
 ];
+
+// Añade los retos extra (mecánicas nuevas) a cada nodo que corresponda.
+for (const nodo of NODOS) {
+  const extra = RETOS_EXTRA[nodo.id];
+  if (extra) nodo.retos.push(...extra);
+}
 
 export const NODOS_JUGABLES = NODOS.filter((n) => n.id !== "final");
 
